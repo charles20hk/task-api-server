@@ -18,6 +18,6 @@ class BaseConfig(BaseSettings):
     )
 
     @classmethod
-    def load(cls) -> Self:
+    def load(cls) -> Self:  # pragma: no cover
         """Load the config."""
         return cls()
