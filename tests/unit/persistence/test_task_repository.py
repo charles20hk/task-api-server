@@ -38,7 +38,7 @@ class TestTaskRepository:
         assert actual.completed == mock_create_task_request.completed
         assert actual.id
 
-    def test_return_task_on_get(
+    def test_return_tasks_on_query_without_params(
         self,
         repository: TaskRepository,
         mock_due_date: datetime,
@@ -48,7 +48,7 @@ class TestTaskRepository:
         """Test retrieving a task."""
         repository.add(mock_create_task_request)
 
-        actual = repository.get({"title": "Test Task"})
+        actual = repository.query()
         assert len(actual) == 1
         assert isinstance(actual[0], Task)
         assert actual[0].title == mock_create_task_request_dict["title"]
@@ -59,7 +59,7 @@ class TestTaskRepository:
             == mock_create_task_request_dict["description"]
         )
 
-    def test_returns_on_get_by_priority(
+    def test_returns_on_query_with_priority(
         self,
         repository: TaskRepository,
         mock_create_task_request: CreateTaskRequest,
@@ -67,7 +67,7 @@ class TestTaskRepository:
         """Test retrieving tasks by priority."""
         repository.add(mock_create_task_request)
         repository.add(mock_create_task_request)
-        tasks = repository.get_by_priority(Priority.MEDIUM)
+        tasks = repository.query(priority=Priority.MEDIUM)
         assert len(tasks) == 2
         task_1_data_dict = tasks[0].model_dump()
         task_2_data_dict = tasks[1].model_dump()
@@ -76,7 +76,7 @@ class TestTaskRepository:
         assert task_1_data_dict == mock_create_task_request.model_dump()
         assert task_2_data_dict == mock_create_task_request.model_dump()
 
-    def test_returns_on_get_by_status(
+    def test_returns_on_query_with_status(
         self,
         repository: TaskRepository,
         mock_create_task_request: CreateTaskRequest,
@@ -84,7 +84,7 @@ class TestTaskRepository:
         """Test retrieving tasks by completion status."""
         repository.add(mock_create_task_request)
         repository.add(mock_create_task_request)
-        tasks = repository.get_by_status(False)
+        tasks = repository.query(completed=False)
         assert len(tasks) == 2
         task_1_data_dict = tasks[0].model_dump()
         task_2_data_dict = tasks[1].model_dump()

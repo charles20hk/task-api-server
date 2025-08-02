@@ -9,10 +9,6 @@ from app.schemas import Priority
 class TaskRepository(BaseRepository):
     """Repository for managing task data."""
 
-    def __init__(self, db_name: str | None = None) -> None:
-        """Initialize the task repository with a database connection."""
-        super().__init__(db_name)
-
     def _create_tables(self) -> None:
         """Create the tasks table in the database."""
         with self._get_connection() as conn:
@@ -52,7 +48,7 @@ class TaskRepository(BaseRepository):
                 completed=data_model.completed,
             )
 
-    def get(self, query: dict) -> list[Task]:
+    def _get(self, query: dict) -> list[Task]:
         """Retrieve tasks based on the query."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -64,15 +60,17 @@ class TaskRepository(BaseRepository):
                 "description",
                 "completed",
             ]
-            sql_query = "SELECT " + (", ".join(fields)) + " FROM tasks WHERE "  # noqa: S608
+            sql_query = "SELECT " + (", ".join(fields)) + " FROM tasks"  # noqa: S608
             conditions = []
             values = []
 
-            for key, value in query.items():
-                conditions.append(f"{key} = ?")
-                values.append(value)
+            if query:
+                sql_query += " WHERE "
+                for key, value in query.items():
+                    conditions.append(f"{key} = ?")
+                    values.append(value)
 
-            sql_query += " AND ".join(conditions)
+                sql_query += " AND ".join(conditions)
             cursor.execute(sql_query, values)
             rows = cursor.fetchall()
 
@@ -90,17 +88,20 @@ class TaskRepository(BaseRepository):
                 for row in rows
             ]
 
-    def get_by_priority(self, priority: Priority) -> list[Task]:
+    def query(
+        self, priority: Priority | None = None, completed: bool | None = None
+    ) -> list[Task]:
         """Retrieve tasks by priority."""
-        return self.get({"priority": priority.value})
-
-    def get_by_status(self, completed: bool) -> list[Task]:
-        """Retrieve tasks by completion status."""
-        return self.get({"completed": completed})
+        query = {}
+        if priority is not None:
+            query["priority"] = priority.value
+        if completed is not None:
+            query["completed"] = completed
+        return self._get(query)
 
     def get_by_id(self, id: int) -> Task:
         """Retrieve a task by its id."""
-        tasks = self.get({"id": id})
+        tasks = self._get({"id": id})
         if not tasks:
             raise NotFoundError(id)
         return tasks[0]

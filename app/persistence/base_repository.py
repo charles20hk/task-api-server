@@ -14,16 +14,14 @@ class BaseRepository(ABC, Generic[T]):
     for all repositories.
     """
 
-    def __init__(self, db_name: str | None = None) -> None:
+    def __init__(self, db_name: str) -> None:
         """Initialize the repository with a database connection."""
-        self._conn = self._get_connection(db_name)
+        self._db_name = db_name
         self._create_tables()
 
-    def _get_connection(
-        self, db_name: str | None = None
-    ) -> sqlite3.Connection:
+    def _get_connection(self) -> sqlite3.Connection:
         """Get the database connection."""
-        return sqlite3.connect(db_name or "tasks_db")
+        return sqlite3.connect(self._db_name)
 
     @abstractmethod
     def _create_tables(self) -> None:
@@ -34,7 +32,7 @@ class BaseRepository(ABC, Generic[T]):
         """Add a new entity to the database."""
 
     @abstractmethod
-    def get(self, query: dict) -> list[T]:
+    def _get(self, query: dict) -> list[T]:
         """Retrieve entities from the database based on the query."""
 
     @abstractmethod

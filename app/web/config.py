@@ -22,8 +22,17 @@ class ServerConfig(BaseModel):
     """Port to run the server on."""
 
 
+class DatabaseConfig(BaseModel):
+    """Configuration for database."""
+
+    db_name: str = "tasks.db"
+
+
 class WebConfig(BaseWebConfig):
     """Web application configuration."""
 
     server: ServerConfig = ServerConfig()
     """Configuration for server."""
+
+    database: DatabaseConfig = DatabaseConfig()
+    """Configuration for database."""

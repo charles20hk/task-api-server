@@ -12,7 +12,7 @@ from app.schemas import Priority
 @pytest.fixture
 def repository() -> TaskRepository:
     """Fixture to create a TaskRepository instance."""
-    return TaskRepository(":memory:")
+    return TaskRepository("tasks.db")
 
 
 @pytest.fixture

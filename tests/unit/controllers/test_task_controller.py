@@ -7,7 +7,7 @@ import pytest
 
 from app.controllers.task import TaskController
 from app.persistence.schemas import Task as PersistenceTask
-from app.schemas import CreateTaskRequest, Priority, Task
+from app.schemas import CreateTaskRequest, Priority, Task, TaskQueryParams
 
 
 class TestTaskController:
@@ -36,5 +36,60 @@ class TestTaskController:
             due_date=mock_due_date,
             description="Test description",
             completed=False,
+        )
+        assert expected == actual
+
+    def test_return_on_get_without_params(
+        self,
+        controller: TaskController,
+        task_repository: MagicMock,
+        mock_due_date: datetime,
+        mock_saved_task: PersistenceTask,
+        mock_task_response: Task,
+    ) -> None:
+        """Test that get returns a list of Task objects."""
+        task_repository.query.return_value = [mock_saved_task]
+        actual = controller.get(TaskQueryParams())
+        task = Task(
+            id=1,
+            title="Test Task",
+            priority=Priority.MEDIUM,
+            due_date=mock_due_date,
+            description="Test description",
+            completed=False,
+        )
+        expected = [task]
+        task_repository.query.assert_called_once_with(
+            priority=None, completed=None
+        )
+        assert expected == actual
+
+    def test_return_on_get_with_params(
+        self,
+        controller: TaskController,
+        task_repository: MagicMock,
+        mock_due_date: datetime,
+        mock_saved_task: PersistenceTask,
+        mock_task_response: Task,
+    ) -> None:
+        """Test that get returns a list of Task objects."""
+        task_repository.query.return_value = [mock_saved_task]
+        actual = controller.get(
+            TaskQueryParams(
+                priority=Priority.MEDIUM.value,
+                completed=False,
+            )
+        )
+        task = Task(
+            id=1,
+            title="Test Task",
+            priority=Priority.MEDIUM,
+            due_date=mock_due_date,
+            description="Test description",
+            completed=False,
+        )
+        expected = [task]
+        task_repository.query.assert_called_once_with(
+            priority=Priority.MEDIUM, completed=False
         )
         assert expected == actual
