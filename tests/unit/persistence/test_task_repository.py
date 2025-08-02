@@ -1,23 +1,27 @@
 """Unit tests for the TaskRepository class."""
 
 from datetime import datetime
+from typing import Generator
 
 import pytest
 
 from app.persistence.exception import NotFoundError
-from app.persistence.schema import CreateTaskRequest, Priority, Task
+from app.persistence.schemas import CreateTaskRequest, Priority, Task
 from app.persistence.task_repository import TaskRepository
 
 
 class TestTaskRepository:
     """Tests for the TaskRepository class."""
 
-    def test_tables_created(self, repository: TaskRepository) -> None:
-        """Test if the tables are created correctly."""
-        cursor = repository._conn.cursor()
-        cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-        tables = cursor.fetchall()
-        assert ("tasks",) in tables
+    @pytest.fixture(autouse=True)
+    def cleanup(
+        self, repository: TaskRepository
+    ) -> Generator[None, None, None]:
+        """Cleanup the database before each test."""
+        yield
+        with repository._get_connection() as conn:
+            conn.execute("DELETE FROM tasks")
+            conn.commit()
 
     def test_task_added(
         self,

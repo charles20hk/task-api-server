@@ -14,10 +14,16 @@ class BaseRepository(ABC, Generic[T]):
     for all repositories.
     """
 
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(self, db_name: str | None = None) -> None:
         """Initialize the repository with a database connection."""
-        self._conn = conn
+        self._conn = self._get_connection(db_name)
         self._create_tables()
+
+    def _get_connection(
+        self, db_name: str | None = None
+    ) -> sqlite3.Connection:
+        """Get the database connection."""
+        return sqlite3.connect(db_name or "tasks_db")
 
     @abstractmethod
     def _create_tables(self) -> None:

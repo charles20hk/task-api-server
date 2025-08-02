@@ -45,4 +45,4 @@ def configure_apis(fastapp: FastAPI) -> None:
     :returns: None.
     """
     for router in all_routers:
-        fastapp.include_router(router, prefix="/v1")
+        fastapp.include_router(router)

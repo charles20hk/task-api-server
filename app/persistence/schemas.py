@@ -1,17 +1,10 @@
 """Schema for persistence layer."""
 
 from datetime import datetime
-from enum import Enum
 
 from pydantic import BaseModel
 
-
-class Priority(Enum):
-    """Enum for task priority levels."""
-
-    HIGH = 1
-    MEDIUM = 2
-    LOW = 3
+from app.schemas import Priority
 
 
 class CreateTaskRequest(BaseModel):
@@ -20,8 +13,8 @@ class CreateTaskRequest(BaseModel):
     title: str
     priority: Priority
     due_date: datetime
-    description: str | None = None
-    completed: bool = False
+    description: str | None
+    completed: bool
 
 
 class Task(BaseModel):
@@ -31,5 +24,5 @@ class Task(BaseModel):
     title: str
     priority: Priority
     due_date: datetime
-    description: str | None = None
+    description: str | None
     completed: bool

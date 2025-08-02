@@ -1,31 +1,18 @@
 """Fixtures for persistent unit tests."""
 
-import sqlite3
 from datetime import datetime
 
 import pytest
 
-from app.persistence.schema import CreateTaskRequest, Priority
+from app.persistence.schemas import CreateTaskRequest
 from app.persistence.task_repository import TaskRepository
+from app.schemas import Priority
 
 
 @pytest.fixture
-def conn() -> sqlite3.Connection:
-    """Fixture to create an in-memory SQLite connection."""
-    return sqlite3.connect(":memory:")
-
-
-@pytest.fixture
-def repository(conn: sqlite3.Connection) -> TaskRepository:
+def repository() -> TaskRepository:
     """Fixture to create a TaskRepository instance."""
-    repo = TaskRepository(conn)
-    return repo
-
-
-@pytest.fixture
-def mock_due_date() -> datetime:
-    """Fixture to provide a mock due date."""
-    return datetime(2023, 12, 31, 12, 0, 0)
+    return TaskRepository(":memory:")
 
 
 @pytest.fixture

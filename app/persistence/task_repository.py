@@ -1,23 +1,22 @@
 """Task repository for managing task data."""
 
-import sqlite3
-
 from app.persistence.base_repository import BaseRepository
 from app.persistence.exception import NotFoundError
-from app.persistence.schema import CreateTaskRequest, Priority, Task
+from app.persistence.schemas import CreateTaskRequest, Task
+from app.schemas import Priority
 
 
 class TaskRepository(BaseRepository):
     """Repository for managing task data."""
 
-    def __init__(self, conn: sqlite3.Connection) -> None:
+    def __init__(self, db_name: str | None = None) -> None:
         """Initialize the task repository with a database connection."""
-        super().__init__(conn)
+        super().__init__(db_name)
 
     def _create_tables(self) -> None:
         """Create the tasks table in the database."""
-        with self._conn:
-            self._conn.execute(
+        with self._get_connection() as conn:
+            conn.execute(
                 """
                 CREATE TABLE IF NOT EXISTS tasks (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,9 +31,9 @@ class TaskRepository(BaseRepository):
 
     def add(self, data_model: CreateTaskRequest) -> Task:
         """Add a new task to the database."""
-        with self._conn:
+        with self._get_connection() as conn:
             fields = "title, priority, due_date, description, completed"
-            cursor = self._conn.execute(
+            cursor = conn.execute(
                 f"INSERT INTO tasks ({fields}) VALUES (?, ?, ?, ?, ?)",  # noqa: S608
                 (
                     data_model.title,
@@ -55,40 +54,41 @@ class TaskRepository(BaseRepository):
 
     def get(self, query: dict) -> list[Task]:
         """Retrieve tasks based on the query."""
-        cursor = self._conn.cursor()
-        fields = [
-            "id",
-            "title",
-            "priority",
-            "due_date",
-            "description",
-            "completed",
-        ]
-        sql_query = "SELECT " + (", ".join(fields)) + " FROM tasks WHERE "  # noqa: S608
-        conditions = []
-        values = []
+        with self._get_connection() as conn:
+            cursor = conn.cursor()
+            fields = [
+                "id",
+                "title",
+                "priority",
+                "due_date",
+                "description",
+                "completed",
+            ]
+            sql_query = "SELECT " + (", ".join(fields)) + " FROM tasks WHERE "  # noqa: S608
+            conditions = []
+            values = []
 
-        for key, value in query.items():
-            conditions.append(f"{key} = ?")
-            values.append(value)
+            for key, value in query.items():
+                conditions.append(f"{key} = ?")
+                values.append(value)
 
-        sql_query += " AND ".join(conditions)
-        cursor.execute(sql_query, values)
-        rows = cursor.fetchall()
+            sql_query += " AND ".join(conditions)
+            cursor.execute(sql_query, values)
+            rows = cursor.fetchall()
 
-        return [
-            Task.model_validate(
-                {
-                    fields[0]: row[0],
-                    fields[1]: row[1],
-                    fields[2]: row[2],
-                    fields[3]: row[3],
-                    fields[4]: row[4],
-                    fields[5]: bool(row[5]),
-                }
-            )
-            for row in rows
-        ]
+            return [
+                Task.model_validate(
+                    {
+                        fields[0]: row[0],
+                        fields[1]: row[1],
+                        fields[2]: row[2],
+                        fields[3]: row[3],
+                        fields[4]: row[4],
+                        fields[5]: bool(row[5]),
+                    }
+                )
+                for row in rows
+            ]
 
     def get_by_priority(self, priority: Priority) -> list[Task]:
         """Retrieve tasks by priority."""
@@ -107,5 +107,5 @@ class TaskRepository(BaseRepository):
 
     def delete(self, id: int) -> None:
         """Delete a task by id."""
-        with self._conn:
-            self._conn.execute("DELETE FROM tasks WHERE id = ?", (id,))
+        with self._get_connection() as conn:
+            conn.execute("DELETE FROM tasks WHERE id = ?", (id,))
