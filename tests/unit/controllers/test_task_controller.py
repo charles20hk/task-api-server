@@ -157,3 +157,25 @@ class TestTaskController:
 
         assert actual == updated_task
         task_repository.update.assert_called_once()
+
+    def test_raise_not_found_error_on_delete(
+        self,
+        controller: TaskController,
+        task_repository: MagicMock,
+    ) -> None:
+        """Test that delete raises Not Found Error when no task is found."""
+        task_repository.query.return_value = []
+        with pytest.raises(NotFoundError):
+            controller.delete(1)
+
+    def test_repo_delete_called_on_delete(
+        self,
+        controller: TaskController,
+        task_repository: MagicMock,
+        mock_saved_task: PersistenceTask,
+    ) -> None:
+        """Test that delete calls the repository's delete method."""
+        task_repository.query.return_value = [mock_saved_task]
+        task_repository.delete.return_value = None
+        controller.delete(1)
+        task_repository.delete.assert_called_once_with(id=1)

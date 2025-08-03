@@ -16,6 +16,7 @@ from app.schemas import (
 )
 from app.web.resources.tasks.api import (
     create_task,
+    delete_task,
     get_task_by_id,
     query,
     update_task,
@@ -131,3 +132,31 @@ class TestCreateTaskAPI:
             id=1, update_task_request=update_task_request
         )
         assert result == updated_task
+
+    @pytest.mark.anyio
+    async def test_raise_404_on_delete_task_when_not_found(
+        self,
+        mock_task_controller: MagicMock,
+    ) -> None:
+        """Test that HTTPException is raised with 404 status code...
+
+        when task is not found.
+        """
+        mock_task_controller.delete.side_effect = NotFoundError(1)
+        with pytest.raises(HTTPException) as exc_info:
+            await delete_task(1, mock_task_controller)
+        assert exc_info.value.status_code == 404
+
+    @pytest.mark.anyio
+    async def test_returns_on_delete_task(
+        self,
+        mock_task_controller: MagicMock,
+    ) -> None:
+        """Test that delete is called on the task controller...
+
+        when deleting a task.
+        """
+        mock_task_controller.delete.return_value = None
+        result = await delete_task(1, mock_task_controller)
+        mock_task_controller.delete.assert_called_once_with(1)
+        assert result.message == "Task deleted successfully"

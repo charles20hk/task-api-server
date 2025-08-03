@@ -14,6 +14,7 @@ from app.schemas import (
     TaskQueryParams,
     UpdateTaskRequest,
 )
+from app.web.resources.tasks.schemas import DeleteTaskResponse
 
 
 async def create_task(
@@ -55,6 +56,20 @@ async def update_task(
         return task_controller.update(
             id=id, update_task_request=update_task_request
         )
+    except NotFoundError as exc:
+        raise HTTPException(
+            status_code=404, detail=f"Task with ID {exc.id} not found"
+        )
+
+
+async def delete_task(
+    id: int,
+    task_controller: Annotated[TaskController, Depends(get_task_controller)],
+) -> DeleteTaskResponse:
+    """Delete a task."""
+    try:
+        task_controller.delete(id)
+        return DeleteTaskResponse(message="Task deleted successfully")
     except NotFoundError as exc:
         raise HTTPException(
             status_code=404, detail=f"Task with ID {exc.id} not found"

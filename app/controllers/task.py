@@ -63,3 +63,10 @@ class TaskController:
         )
         updated_task = self.task_repository.query(QueryParams(id=id))[0]
         return PersistenceToTaskMapper.convert(updated_task)
+
+    def delete(self, id: int) -> None:
+        """Delete a task by its ID."""
+        saved_task = self.task_repository.query(QueryParams(id=id))
+        if not saved_task:
+            raise NotFoundError(id)
+        self.task_repository.delete(id=id)

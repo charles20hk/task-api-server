@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from app.web.resources.tasks.api import (
     create_task,
+    delete_task,
     get_task_by_id,
     query,
     update_task,
@@ -16,3 +17,4 @@ router.add_api_route("/", create_task, methods=["POST"], tags=["Tasks"])
 router.add_api_route("/", query, methods=["GET"], tags=["Tasks"])
 router.add_api_route("/{id}", get_task_by_id, methods=["GET"], tags=["Tasks"])
 router.add_api_route("/{id}", update_task, methods=["PUT"], tags=["Tasks"])
+router.add_api_route("/{id}", delete_task, methods=["DELETE"], tags=["Tasks"])

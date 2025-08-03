@@ -48,3 +48,9 @@ def query_tasks_url(test_app: FastAPI) -> str:
 def update_task_url(test_app: FastAPI) -> str:
     """Fixture for the update task url."""
     return test_app.url_path_for("update_task", id=1)
+
+
+@pytest.fixture(scope="session")
+def delete_task_url(test_app: FastAPI) -> str:
+    """Fixture for the delete task url."""
+    return test_app.url_path_for("delete_task", id=1)
