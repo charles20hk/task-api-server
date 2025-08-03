@@ -9,7 +9,13 @@ from app.controllers.exception import NotFoundError
 from app.controllers.task import TaskController
 from app.persistence.schemas import QueryParams
 from app.persistence.schemas import Task as PersistenceTask
-from app.schemas import CreateTaskRequest, Priority, Task, TaskQueryParams
+from app.schemas import (
+    CreateTaskRequest,
+    Priority,
+    Task,
+    TaskQueryParams,
+    UpdateTaskRequest,
+)
 
 
 class TestTaskController:
@@ -123,3 +129,31 @@ class TestTaskController:
         task_repository.query.return_value = []
         with pytest.raises(NotFoundError):
             controller.get_by_id(1)
+
+    def test_raise_not_found_error_on_update(
+        self,
+        controller: TaskController,
+        task_repository: MagicMock,
+        update_task_request: UpdateTaskRequest,
+    ) -> None:
+        """Test that update raises Not Found Error when no task is found."""
+        task_repository.query.return_value = []
+        with pytest.raises(NotFoundError):
+            controller.update(1, update_task_request)
+
+    def test_return_on_update(
+        self,
+        controller: TaskController,
+        task_repository: MagicMock,
+        update_task_request: UpdateTaskRequest,
+        mock_saved_task: PersistenceTask,
+        updated_task: Task,
+    ) -> None:
+        """Test that update returns an updated Task object."""
+        task_repository.query.side_effect = [[mock_saved_task], [updated_task]]
+        task_repository.update.return_value = None
+
+        actual = controller.update(1, update_task_request)
+
+        assert actual == updated_task
+        task_repository.update.assert_called_once()

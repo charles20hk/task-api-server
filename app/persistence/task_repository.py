@@ -104,13 +104,15 @@ class TaskRepository(BaseRepository):
 
     def update(self, id: int, update_task_request: UpdateTaskRequest) -> None:
         """Update an existing task."""
+        update_task_request_dict = update_task_request.model_dump(
+            exclude_unset=True
+        )
+        if not update_task_request_dict:
+            return
+
         with self._get_connection() as conn:
             fields = []
             values = []
-
-            update_task_request_dict = update_task_request.model_dump(
-                exclude_unset=True
-            )
 
             for key, value in update_task_request_dict.items():
                 fields.append(f"{key} = ?")
@@ -120,9 +122,6 @@ class TaskRepository(BaseRepository):
                     values.append(value.isoformat())
                 else:
                     values.append(value)
-
-            if not fields:
-                raise ValueError("No fields to update")
 
             sql_query = f"UPDATE tasks SET {', '.join(fields)} WHERE id = ?"  # noqa: S608
             values.append(id)

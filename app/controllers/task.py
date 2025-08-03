@@ -1,15 +1,21 @@
 """Task controller module."""
 
 from app.controllers.exception import NotFoundError
-from app.persistence.schemas import (
-    CreateTaskRequest as PersistenceCreateTaskRequest,
+from app.controllers.mappers import (
+    CreateRequestToPersistenceMapper,
+    PersistenceToTaskMapper,
+    UpdateRequestToPersistenceMapper,
 )
 from app.persistence.schemas import (
     QueryParams,
 )
-from app.persistence.schemas import Task as PersistenceTask
 from app.persistence.task_repository import TaskRepository
-from app.schemas import CreateTaskRequest, Task, TaskQueryParams
+from app.schemas import (
+    CreateTaskRequest,
+    Task,
+    TaskQueryParams,
+    UpdateTaskRequest,
+)
 
 
 class TaskController:
@@ -19,31 +25,12 @@ class TaskController:
         """Initialize the TaskController with a task repository."""
         self.task_repository = task_repository
 
-    def _convert_persistence_to_task(
-        self, saved_task: PersistenceTask
-    ) -> Task:
-        """Convert a PersistenceTask to a Task."""
-        return Task(
-            id=saved_task.id,
-            title=saved_task.title,
-            priority=saved_task.priority,
-            due_date=saved_task.due_date,
-            description=saved_task.description,
-            completed=saved_task.completed,
-        )
-
     def create(self, create_task_request: CreateTaskRequest) -> Task:
         """Create a new task."""
-        persistence_request = PersistenceCreateTaskRequest(
-            title=create_task_request.title,
-            priority=create_task_request.priority,
-            due_date=create_task_request.due_date,
-            description=create_task_request.description,
-            completed=False,
+        saved_task = self.task_repository.add(
+            CreateRequestToPersistenceMapper.convert(create_task_request)
         )
-
-        saved_task = self.task_repository.add(persistence_request)
-        return self._convert_persistence_to_task(saved_task)
+        return PersistenceToTaskMapper.convert(saved_task)
 
     def get(self, task_query_params: TaskQueryParams) -> list[Task]:
         """Retrieve tasks based on query parameters."""
@@ -53,13 +40,26 @@ class TaskController:
                 completed=task_query_params.completed,
             )
         )
-        return [
-            self._convert_persistence_to_task(task) for task in saved_tasks
-        ]
+        return [PersistenceToTaskMapper.convert(task) for task in saved_tasks]
 
     def get_by_id(self, id: int) -> Task:
         """Retrieve a task by its ID."""
         saved_task = self.task_repository.query(QueryParams(id=id))
         if not saved_task:
             raise NotFoundError(id)
-        return self._convert_persistence_to_task(saved_task[0])
+        return PersistenceToTaskMapper.convert(saved_task[0])
+
+    def update(self, id: int, update_task_request: UpdateTaskRequest) -> Task:
+        """Update an existing task."""
+        saved_task = self.task_repository.query(QueryParams(id=id))
+        if not saved_task:
+            raise NotFoundError(id)
+
+        persistence_request = UpdateRequestToPersistenceMapper.convert(
+            update_task_request
+        )
+        self.task_repository.update(
+            id=id, update_task_request=persistence_request
+        )
+        updated_task = self.task_repository.query(QueryParams(id=id))[0]
+        return PersistenceToTaskMapper.convert(updated_task)
