@@ -3,10 +3,12 @@
 from unittest.mock import MagicMock, create_autospec
 
 import pytest
+from fastapi import HTTPException
 
+from app.controllers.exception import NotFoundError
 from app.controllers.task import TaskController
 from app.schemas import CreateTaskRequest, Priority, Task, TaskQueryParams
-from app.web.resources.tasks.api import create_task, query
+from app.web.resources.tasks.api import create_task, get_task_by_id, query
 
 
 class TestCreateTaskAPI:
@@ -49,7 +51,37 @@ class TestCreateTaskAPI:
 
         when retrieving a task.
         """
-        mock_task_controller.get.return_value = mock_task_response
+        mock_task_controller.get.return_value = [mock_task_response]
         result = await query(query_params, mock_task_controller)
         mock_task_controller.get.assert_called_once_with(query_params)
+        assert result == [mock_task_response]
+
+    @pytest.mark.anyio
+    async def test_controller_get_by_id_called_on_get_task_by_id(
+        self,
+        mock_task_controller: MagicMock,
+        mock_task_response: Task,
+    ) -> None:
+        """Test that get is called on the task controller...
+
+        when retrieving a task.
+        """
+        mock_task_controller.get_by_id.return_value = mock_task_response
+        result = await get_task_by_id(1, mock_task_controller)
+        mock_task_controller.get_by_id.assert_called_once_with(1)
         assert result == mock_task_response
+
+    @pytest.mark.anyio
+    async def test_raise_404_on_get_task_by_id_when_not_found(
+        self,
+        mock_task_controller: MagicMock,
+        mock_task_response: Task,
+    ) -> None:
+        """Test that HTTPException is raised with 404 status code...
+
+        when task is not found.
+        """
+        mock_task_controller.get_by_id.side_effect = NotFoundError(1)
+        with pytest.raises(HTTPException) as exc_info:
+            await get_task_by_id(1, mock_task_controller)
+        assert exc_info.value.status_code == 404

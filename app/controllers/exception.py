@@ -6,4 +6,5 @@ class NotFoundError(Exception):
 
     def __init__(self, id: int) -> None:
         """Initialize with the ID of the not found resource."""
+        self.id = id
         super().__init__(f"Resource with ID {id} not found.")

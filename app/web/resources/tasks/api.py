@@ -2,9 +2,10 @@
 
 from typing import Annotated
 
-from fastapi import Depends
+from fastapi import Depends, HTTPException
 from fastapi.params import Query
 
+from app.controllers.exception import NotFoundError
 from app.controllers.task import TaskController
 from app.dependencies import get_task_controller
 from app.schemas import CreateTaskRequest, Task, TaskQueryParams
@@ -24,3 +25,16 @@ async def query(
 ) -> list[Task]:
     """Query tasks."""
     return task_controller.get(query)
+
+
+async def get_task_by_id(
+    id: int,
+    task_controller: Annotated[TaskController, Depends(get_task_controller)],
+) -> Task:
+    """Get a task by its ID."""
+    try:
+        return task_controller.get_by_id(id)
+    except NotFoundError as exc:
+        raise HTTPException(
+            status_code=404, detail=f"Task with ID {exc.id} not found"
+        )

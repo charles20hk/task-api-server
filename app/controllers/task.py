@@ -1,5 +1,6 @@
 """Task controller module."""
 
+from app.controllers.exception import NotFoundError
 from app.persistence.schemas import (
     CreateTaskRequest as PersistenceCreateTaskRequest,
 )
@@ -55,3 +56,10 @@ class TaskController:
         return [
             self._convert_persistence_to_task(task) for task in saved_tasks
         ]
+
+    def get_by_id(self, id: int) -> Task:
+        """Retrieve a task by its ID."""
+        saved_task = self.task_repository.query(QueryParams(id=id))
+        if not saved_task:
+            raise NotFoundError(id)
+        return self._convert_persistence_to_task(saved_task[0])

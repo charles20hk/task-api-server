@@ -5,6 +5,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from app.controllers.exception import NotFoundError
 from app.controllers.task import TaskController
 from app.persistence.schemas import QueryParams
 from app.persistence.schemas import Task as PersistenceTask
@@ -91,3 +92,34 @@ class TestTaskController:
             QueryParams(priority=Priority.MEDIUM, completed=False)
         )
         assert expected == actual
+
+    def test_return_on_get_by_id(
+        self,
+        controller: TaskController,
+        task_repository: MagicMock,
+        mock_due_date: datetime,
+        mock_saved_task: PersistenceTask,
+    ) -> None:
+        """Test that get_by_id returns a Task object."""
+        task_repository.query.return_value = [mock_saved_task]
+        actual = controller.get_by_id(1)
+        expected = Task(
+            id=1,
+            title="Test Task",
+            priority=Priority.MEDIUM,
+            due_date=mock_due_date,
+            description="Test description",
+            completed=False,
+        )
+        task_repository.query.assert_called_once_with(QueryParams(id=1))
+        assert expected == actual
+
+    def test_raise_not_found_error_on_get_by_id(
+        self,
+        controller: TaskController,
+        task_repository: MagicMock,
+    ) -> None:
+        """Test that get_by_id raises Not Found Error when no task is found."""
+        task_repository.query.return_value = []
+        with pytest.raises(NotFoundError):
+            controller.get_by_id(1)
