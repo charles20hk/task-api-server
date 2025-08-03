@@ -32,7 +32,7 @@ class BaseRepository(ABC, Generic[T]):
         """Add a new entity to the database."""
 
     @abstractmethod
-    def _get(self, query: dict) -> list[T]:
+    def query(self, data_model: T) -> list[T]:
         """Retrieve entities from the database based on the query."""
 
     @abstractmethod

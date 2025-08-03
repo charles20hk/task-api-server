@@ -26,3 +26,11 @@ class Task(BaseModel):
     due_date: datetime
     description: str | None
     completed: bool
+
+
+class QueryParams(BaseModel):
+    """Query parameters for filtering tasks."""
+
+    priority: Priority | None = None
+    completed: bool | None = None
+    id: int | None = None

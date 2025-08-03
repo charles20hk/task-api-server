@@ -3,6 +3,9 @@
 from app.persistence.schemas import (
     CreateTaskRequest as PersistenceCreateTaskRequest,
 )
+from app.persistence.schemas import (
+    QueryParams,
+)
 from app.persistence.schemas import Task as PersistenceTask
 from app.persistence.task_repository import TaskRepository
 from app.schemas import CreateTaskRequest, Task, TaskQueryParams
@@ -44,8 +47,10 @@ class TaskController:
     def get(self, task_query_params: TaskQueryParams) -> list[Task]:
         """Retrieve tasks based on query parameters."""
         saved_tasks = self.task_repository.query(
-            priority=task_query_params.priority,
-            completed=task_query_params.completed,
+            QueryParams(
+                priority=task_query_params.priority,
+                completed=task_query_params.completed,
+            )
         )
         return [
             self._convert_persistence_to_task(task) for task in saved_tasks

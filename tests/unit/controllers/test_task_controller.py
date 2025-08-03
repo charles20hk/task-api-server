@@ -6,6 +6,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from app.controllers.task import TaskController
+from app.persistence.schemas import QueryParams
 from app.persistence.schemas import Task as PersistenceTask
 from app.schemas import CreateTaskRequest, Priority, Task, TaskQueryParams
 
@@ -59,9 +60,7 @@ class TestTaskController:
             completed=False,
         )
         expected = [task]
-        task_repository.query.assert_called_once_with(
-            priority=None, completed=None
-        )
+        task_repository.query.assert_called_once_with(QueryParams())
         assert expected == actual
 
     def test_return_on_get_with_params(
@@ -70,7 +69,6 @@ class TestTaskController:
         task_repository: MagicMock,
         mock_due_date: datetime,
         mock_saved_task: PersistenceTask,
-        mock_task_response: Task,
     ) -> None:
         """Test that get returns a list of Task objects."""
         task_repository.query.return_value = [mock_saved_task]
@@ -90,6 +88,6 @@ class TestTaskController:
         )
         expected = [task]
         task_repository.query.assert_called_once_with(
-            priority=Priority.MEDIUM, completed=False
+            QueryParams(priority=Priority.MEDIUM, completed=False)
         )
         assert expected == actual

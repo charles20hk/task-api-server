@@ -1,9 +1,7 @@
 """Task repository for managing task data."""
 
 from app.persistence.base_repository import BaseRepository
-from app.persistence.exception import NotFoundError
-from app.persistence.schemas import CreateTaskRequest, Task
-from app.schemas import Priority
+from app.persistence.schemas import CreateTaskRequest, QueryParams, Task
 
 
 class TaskRepository(BaseRepository):
@@ -88,23 +86,16 @@ class TaskRepository(BaseRepository):
                 for row in rows
             ]
 
-    def query(
-        self, priority: Priority | None = None, completed: bool | None = None
-    ) -> list[Task]:
+    def query(self, query_params: QueryParams) -> list[Task]:
         """Retrieve tasks by priority."""
         query = {}
-        if priority is not None:
-            query["priority"] = priority.value
-        if completed is not None:
-            query["completed"] = completed
+        if query_params.priority is not None:
+            query["priority"] = query_params.priority.value
+        if query_params.completed is not None:
+            query["completed"] = query_params.completed
+        if query_params.id is not None:
+            query["id"] = query_params.id
         return self._get(query)
-
-    def get_by_id(self, id: int) -> Task:
-        """Retrieve a task by its id."""
-        tasks = self._get({"id": id})
-        if not tasks:
-            raise NotFoundError(id)
-        return tasks[0]
 
     def delete(self, id: int) -> None:
         """Delete a task by id."""

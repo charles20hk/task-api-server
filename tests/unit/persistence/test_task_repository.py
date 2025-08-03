@@ -5,8 +5,12 @@ from typing import Generator
 
 import pytest
 
-from app.persistence.exception import NotFoundError
-from app.persistence.schemas import CreateTaskRequest, Priority, Task
+from app.persistence.schemas import (
+    CreateTaskRequest,
+    Priority,
+    QueryParams,
+    Task,
+)
 from app.persistence.task_repository import TaskRepository
 
 
@@ -38,7 +42,7 @@ class TestTaskRepository:
         assert actual.completed == mock_create_task_request.completed
         assert actual.id
 
-    def test_return_tasks_on_query_without_params(
+    def test_return_tasks_on_query_with_empty_params(
         self,
         repository: TaskRepository,
         mock_due_date: datetime,
@@ -48,7 +52,7 @@ class TestTaskRepository:
         """Test retrieving a task."""
         repository.add(mock_create_task_request)
 
-        actual = repository.query()
+        actual = repository.query(QueryParams())
         assert len(actual) == 1
         assert isinstance(actual[0], Task)
         assert actual[0].title == mock_create_task_request_dict["title"]
@@ -67,7 +71,7 @@ class TestTaskRepository:
         """Test retrieving tasks by priority."""
         repository.add(mock_create_task_request)
         repository.add(mock_create_task_request)
-        tasks = repository.query(priority=Priority.MEDIUM)
+        tasks = repository.query(QueryParams(priority=Priority.MEDIUM))
         assert len(tasks) == 2
         task_1_data_dict = tasks[0].model_dump()
         task_2_data_dict = tasks[1].model_dump()
@@ -84,7 +88,7 @@ class TestTaskRepository:
         """Test retrieving tasks by completion status."""
         repository.add(mock_create_task_request)
         repository.add(mock_create_task_request)
-        tasks = repository.query(completed=False)
+        tasks = repository.query(QueryParams(completed=False))
         assert len(tasks) == 2
         task_1_data_dict = tasks[0].model_dump()
         task_2_data_dict = tasks[1].model_dump()
@@ -93,26 +97,19 @@ class TestTaskRepository:
         assert task_1_data_dict == mock_create_task_request.model_dump()
         assert task_2_data_dict == mock_create_task_request.model_dump()
 
-    def test_returns_on_get_by_id(
+    def test_returns_on_query_with_id(
         self,
         repository: TaskRepository,
         mock_create_task_request: CreateTaskRequest,
     ) -> None:
         """Test retrieving a task by its id."""
         task = repository.add(mock_create_task_request)
-        actual = repository.get_by_id(task.id)
-        assert isinstance(actual, Task)
-        assert actual.id == task.id
-        task_1_data_dict = actual.model_dump()
+        actual = repository.query(QueryParams(id=task.id))
+        assert isinstance(actual[0], Task)
+        assert actual[0].id == task.id
+        task_1_data_dict = actual[0].model_dump()
         del task_1_data_dict["id"]
         assert task_1_data_dict == mock_create_task_request.model_dump()
-
-    def test_raise_not_found_on_get_by_id(
-        self, repository: TaskRepository
-    ) -> None:
-        """Test raising NotFoundError when task is not found by id."""
-        with pytest.raises(NotFoundError):
-            repository.get_by_id(999)
 
     def test_delete(
         self,
@@ -121,8 +118,9 @@ class TestTaskRepository:
     ) -> None:
         """Test deleting a task by id."""
         task = repository.add(mock_create_task_request)
-        result = repository.get_by_id(task.id)
-        assert result
+        result_before = repository.query(QueryParams(id=task.id))
+        assert result_before
         repository.delete(task.id)
-        with pytest.raises(NotFoundError):
-            repository.get_by_id(task.id)
+
+        result_after = repository.query(QueryParams(id=task.id))
+        assert not result_after
