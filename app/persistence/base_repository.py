@@ -36,5 +36,9 @@ class BaseRepository(ABC, Generic[T]):
         """Retrieve entities from the database based on the query."""
 
     @abstractmethod
+    def update(self, id: int, data_model: T) -> None:
+        """Update an existing entity in the database."""
+
+    @abstractmethod
     def delete(self, id: int) -> None:
         """Delete an entity by id from the database."""

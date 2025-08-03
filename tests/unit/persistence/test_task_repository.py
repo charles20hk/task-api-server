@@ -10,6 +10,7 @@ from app.persistence.schemas import (
     Priority,
     QueryParams,
     Task,
+    UpdateTaskRequest,
 )
 from app.persistence.task_repository import TaskRepository
 
@@ -124,3 +125,45 @@ class TestTaskRepository:
 
         result_after = repository.query(QueryParams(id=task.id))
         assert not result_after
+
+    def test_update_all_fields(
+        self,
+        repository: TaskRepository,
+        mock_create_task_request: CreateTaskRequest,
+    ) -> None:
+        """Test updating a task."""
+        task = repository.add(mock_create_task_request)
+        update_request = UpdateTaskRequest(
+            title="Updated Title",
+            priority=Priority.HIGH,
+            due_date=datetime(2023, 12, 31),
+            description="Updated Description",
+            completed=True,
+        )
+        repository.update(task.id, update_request)
+        updated_task = repository.query(QueryParams(id=task.id))[0]
+
+        assert updated_task.title == update_request.title
+        assert updated_task.priority == update_request.priority
+        assert updated_task.due_date == update_request.due_date
+        assert updated_task.description == update_request.description
+        assert updated_task.completed == update_request.completed
+
+    def test_update_some_fields(
+        self,
+        repository: TaskRepository,
+        mock_create_task_request: CreateTaskRequest,
+    ) -> None:
+        """Test updating a task."""
+        task = repository.add(mock_create_task_request)
+        update_request = UpdateTaskRequest(
+            title="Updated Title",
+        )
+        repository.update(task.id, update_request)
+        updated_task = repository.query(QueryParams(id=task.id))[0]
+
+        assert updated_task.title == update_request.title
+        assert updated_task.priority == task.priority
+        assert updated_task.due_date == task.due_date
+        assert updated_task.description == task.description
+        assert updated_task.completed == task.completed

@@ -1,7 +1,12 @@
 """Task repository for managing task data."""
 
 from app.persistence.base_repository import BaseRepository
-from app.persistence.schemas import CreateTaskRequest, QueryParams, Task
+from app.persistence.schemas import (
+    CreateTaskRequest,
+    QueryParams,
+    Task,
+    UpdateTaskRequest,
+)
 
 
 class TaskRepository(BaseRepository):
@@ -96,6 +101,33 @@ class TaskRepository(BaseRepository):
         if query_params.id is not None:
             query["id"] = query_params.id
         return self._get(query)
+
+    def update(self, id: int, update_task_request: UpdateTaskRequest) -> None:
+        """Update an existing task."""
+        with self._get_connection() as conn:
+            fields = []
+            values = []
+
+            update_task_request_dict = update_task_request.model_dump(
+                exclude_unset=True
+            )
+
+            for key, value in update_task_request_dict.items():
+                fields.append(f"{key} = ?")
+                if key == "priority":
+                    values.append(value.value)
+                elif key == "due_date":
+                    values.append(value.isoformat())
+                else:
+                    values.append(value)
+
+            if not fields:
+                raise ValueError("No fields to update")
+
+            sql_query = f"UPDATE tasks SET {', '.join(fields)} WHERE id = ?"  # noqa: S608
+            values.append(id)
+
+            conn.execute(sql_query, values)
 
     def delete(self, id: int) -> None:
         """Delete a task by id."""
