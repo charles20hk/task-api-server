@@ -32,17 +32,34 @@ class TaskController:
         )
         return PersistenceToTaskMapper.convert(saved_task)
 
-    def get(self, task_query_params: TaskQueryParams) -> list[Task]:
+    def get(
+        self, task_query_params: TaskQueryParams
+    ) -> tuple[list[Task], int]:
         """Retrieve tasks based on query parameters."""
         saved_tasks = self.task_repository.query(
-            QueryParams(
+            query_params=QueryParams(
                 priority=task_query_params.priority,
                 completed=task_query_params.completed,
                 title=task_query_params.title,
                 description=task_query_params.description,
+            ),
+            limit=task_query_params.page_size,
+            offset=task_query_params.page_size
+            * (task_query_params.page_number - 1),
+        )
+        total_tasks = len(
+            self.task_repository.query(
+                query_params=QueryParams(
+                    priority=task_query_params.priority,
+                    completed=task_query_params.completed,
+                    title=task_query_params.title,
+                    description=task_query_params.description,
+                )
             )
         )
-        return [PersistenceToTaskMapper.convert(task) for task in saved_tasks]
+        return [
+            PersistenceToTaskMapper.convert(task) for task in saved_tasks
+        ], total_tasks
 
     def get_by_id(self, id: int) -> Task:
         """Retrieve a task by its ID."""

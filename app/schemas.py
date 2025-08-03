@@ -42,6 +42,8 @@ class TaskQueryParams(BaseModel):
     completed: bool | None = None
     title: str | None = None
     description: str | None = None
+    page_size: int = 15
+    page_number: int = 1
 
     @field_validator("priority", mode="before")
     @classmethod

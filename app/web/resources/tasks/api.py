@@ -2,7 +2,7 @@
 
 from typing import Annotated
 
-from fastapi import Depends, HTTPException
+from fastapi import Depends, HTTPException, Request
 from fastapi.params import Query
 
 from app.controllers.exception import NotFoundError
@@ -14,7 +14,11 @@ from app.schemas import (
     TaskQueryParams,
     UpdateTaskRequest,
 )
-from app.web.resources.tasks.schemas import DeleteTaskResponse
+from app.web.resources.pagination import PaginationBuilder
+from app.web.resources.tasks.schemas import (
+    DeleteTaskResponse,
+    GetTasksResponse,
+)
 
 
 async def create_task(
@@ -28,9 +32,21 @@ async def create_task(
 async def query(
     query: Annotated[TaskQueryParams, Query()],
     task_controller: Annotated[TaskController, Depends(get_task_controller)],
-) -> list[Task]:
-    """Query tasks."""
-    return task_controller.get(query)
+    request: Request,
+) -> GetTasksResponse:
+    """Query tasks with query parameters.
+
+    It returns a list of tasks and pagination metadata.
+    """
+    tasks, total = task_controller.get(query)
+
+    pagination = PaginationBuilder.create(
+        page_size=query.page_size,
+        count=total,
+        page_number=query.page_number,
+        url=str(request.url),
+    )
+    return GetTasksResponse(tasks=tasks, pagination=pagination)
 
 
 async def get_task_by_id(

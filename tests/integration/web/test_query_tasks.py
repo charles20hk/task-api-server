@@ -66,15 +66,25 @@ class TestQueryTasksApi:
         assert response.status_code == 200
         assert response.json() is not None
         response_dict = response.json()
-        assert isinstance(response_dict, list)
-        assert len(response_dict) == 2
-        for task_dict in response_dict:
+        assert response_dict["tasks"]
+        response_tasks_dict = response_dict["tasks"]
+        assert isinstance(response_tasks_dict, list)
+        assert len(response_tasks_dict) == 2
+        for task_dict in response_tasks_dict:
             assert task_dict["title"] == "Test Task"
             assert task_dict["priority"] == 3
             assert task_dict["due_date"] == "2000-02-01T15:00:00"
             assert task_dict["description"] == "Test description"
             assert task_dict["completed"] is False
             assert "id" in task_dict
+
+        expected_pagination = {
+            "count": 2,
+            "total_pages": 1,
+            "next_page_url": None,
+            "previous_page_url": None,
+        }
+        assert response_dict["pagination"] == expected_pagination
 
     def test_return_tasks_with_certain_title_and_description(
         self,
@@ -109,16 +119,20 @@ class TestQueryTasksApi:
         response = test_client.get(url)
 
         response_dict = response.json()
-        assert isinstance(response_dict, list)
-        assert len(response_dict) == 1
-        assert response_dict[0]["title"] == "Test Task1"
-        assert response_dict[0]["description"] == "Test description1"
+        assert response_dict["tasks"]
+        response_tasks_dict = response_dict["tasks"]
+        assert isinstance(response_tasks_dict, list)
+        assert len(response_tasks_dict) == 1
+        assert response_tasks_dict[0]["title"] == "Test Task1"
+        assert response_tasks_dict[0]["description"] == "Test description1"
 
         url = f"{query_tasks_url}?description=description2"
         response = test_client.get(url)
 
         response_dict = response.json()
-        assert isinstance(response_dict, list)
-        assert len(response_dict) == 1
-        assert response_dict[0]["title"] == "Test Task2"
-        assert response_dict[0]["description"] == "Test description2"
+        assert response_dict["tasks"]
+        response_tasks_dict = response_dict["tasks"]
+        assert isinstance(response_tasks_dict, list)
+        assert len(response_tasks_dict) == 1
+        assert response_tasks_dict[0]["title"] == "Test Task2"
+        assert response_tasks_dict[0]["description"] == "Test description2"

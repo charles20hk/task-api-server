@@ -1,6 +1,6 @@
 """Unit tests for the tasks API endpoint."""
 
-from unittest.mock import MagicMock, create_autospec
+from unittest.mock import MagicMock, create_autospec, patch
 
 import pytest
 from fastapi import HTTPException
@@ -21,6 +21,7 @@ from app.web.resources.tasks.api import (
     query,
     update_task,
 )
+from app.web.resources.tasks.schemas import GetTasksResponse, Pagination
 
 
 class TestCreateTaskAPI:
@@ -53,7 +54,7 @@ class TestCreateTaskAPI:
         return TaskQueryParams(completed=True, priority=Priority.HIGH.value)
 
     @pytest.mark.anyio
-    async def test_controller_get_called_on_get_task(
+    async def test_controller_get_called_on_query(
         self,
         mock_task_controller: MagicMock,
         query_params: TaskQueryParams,
@@ -63,10 +64,30 @@ class TestCreateTaskAPI:
 
         when retrieving a task.
         """
-        mock_task_controller.get.return_value = [mock_task_response]
-        result = await query(query_params, mock_task_controller)
-        mock_task_controller.get.assert_called_once_with(query_params)
-        assert result == [mock_task_response]
+        mock_task_controller.get.return_value = ([mock_task_response], 1)
+        mock_request = MagicMock(url="http://testserver/tasks")
+        with patch(
+            "app.web.resources.tasks.api.PaginationBuilder.create"
+        ) as mock_pagination_builder_create:
+            mock_pagination = Pagination(
+                count=1,
+                total_pages=1,
+                previous_page_url=None,
+                next_page_url=None,
+            )
+            mock_pagination_builder_create.return_value = mock_pagination
+
+            actual = await query(
+                query=query_params,
+                task_controller=mock_task_controller,
+                request=mock_request,
+            )
+            mock_task_controller.get.assert_called_once_with(query_params)
+            expected = GetTasksResponse(
+                tasks=[mock_task_response],
+                pagination=mock_pagination,
+            )
+            assert actual == expected
 
     @pytest.mark.anyio
     async def test_controller_get_by_id_called_on_get_task_by_id(

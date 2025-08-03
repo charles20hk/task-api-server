@@ -195,3 +195,28 @@ class TestTaskRepository:
         assert updated_task.due_date == task.due_date
         assert updated_task.description == task.description
         assert updated_task.completed == task.completed
+
+    def test_return_tasks_on_query_with_limit_offset(
+        self,
+        repository: TaskRepository,
+        mock_create_task_request_dict: dict,
+    ) -> None:
+        """Test retrieving a task."""
+        copy_1 = mock_create_task_request_dict.copy()
+        copy_1["title"] = "Task 1"
+        copy_2 = mock_create_task_request_dict.copy()
+        copy_2["title"] = "Task 2"
+        copy_3 = mock_create_task_request_dict.copy()
+        copy_3["title"] = "Task 3"
+        copy_4 = mock_create_task_request_dict.copy()
+        copy_4["title"] = "Task 4"
+        repository.add(CreateTaskRequest.model_validate(copy_1))
+        repository.add(CreateTaskRequest.model_validate(copy_2))
+        repository.add(CreateTaskRequest.model_validate(copy_3))
+        repository.add(CreateTaskRequest.model_validate(copy_4))
+
+        actual = repository.query(QueryParams(), limit=2, offset=1)
+        assert len(actual) == 2
+
+        assert actual[0].title == "Task 2"
+        assert actual[1].title == "Task 3"

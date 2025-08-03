@@ -32,7 +32,12 @@ class BaseRepository(ABC, Generic[T]):
         """Add a new entity to the database."""
 
     @abstractmethod
-    def query(self, data_model: T) -> list[T]:
+    def query(
+        self,
+        data_model: T,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[T]:
         """Retrieve entities from the database based on the query."""
 
     @abstractmethod

@@ -51,7 +51,12 @@ class TaskRepository(BaseRepository):
                 completed=data_model.completed,
             )
 
-    def _get(self, query: dict) -> list[Task]:
+    def _get(
+        self,
+        query: dict,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[Task]:
         """Retrieve tasks based on the query."""
         with self._get_connection() as conn:
             cursor = conn.cursor()
@@ -78,6 +83,14 @@ class TaskRepository(BaseRepository):
                         values.append(value)
 
                 sql_query += " AND ".join(conditions)
+
+            if limit is not None:
+                sql_query += " LIMIT ?"
+                values.append(str(limit))
+            if offset is not None:
+                sql_query += " OFFSET ?"
+                values.append(str(offset))
+
             cursor.execute(sql_query, values)
             rows = cursor.fetchall()
 
@@ -95,7 +108,12 @@ class TaskRepository(BaseRepository):
                 for row in rows
             ]
 
-    def query(self, query_params: QueryParams) -> list[Task]:
+    def query(
+        self,
+        query_params: QueryParams,
+        limit: int | None = None,
+        offset: int | None = None,
+    ) -> list[Task]:
         """Retrieve tasks by priority."""
         query: dict = {}
         if query_params.priority is not None:
@@ -108,7 +126,7 @@ class TaskRepository(BaseRepository):
             query["title"] = query_params.title
         if query_params.description is not None:
             query["description"] = query_params.description
-        return self._get(query)
+        return self._get(query=query, limit=limit, offset=offset)
 
     def update(self, id: int, update_task_request: UpdateTaskRequest) -> None:
         """Update an existing task."""

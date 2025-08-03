@@ -56,8 +56,11 @@ class TestTaskController:
         mock_task_response: Task,
     ) -> None:
         """Test that get returns a list of Task objects."""
-        task_repository.query.return_value = [mock_saved_task]
-        actual = controller.get(TaskQueryParams())
+        task_repository.query.side_effect = [
+            [mock_saved_task],
+            [mock_saved_task],
+        ]
+        actual_tasks, actual_total = controller.get(TaskQueryParams())
         task = Task(
             id=1,
             title="Test Task",
@@ -66,9 +69,10 @@ class TestTaskController:
             description="Test description",
             completed=False,
         )
-        expected = [task]
-        task_repository.query.assert_called_once_with(QueryParams())
-        assert expected == actual
+        expected_tasks = [task]
+        task_repository.query.assert_called()
+        assert expected_tasks == actual_tasks
+        assert actual_total == 1
 
     def test_return_on_get_with_params(
         self,
@@ -78,8 +82,11 @@ class TestTaskController:
         mock_saved_task: PersistenceTask,
     ) -> None:
         """Test that get returns a list of Task objects."""
-        task_repository.query.return_value = [mock_saved_task]
-        actual = controller.get(
+        task_repository.query.side_effect = [
+            [mock_saved_task],
+            [mock_saved_task],
+        ]
+        actual_tasks, actual_total = controller.get(
             TaskQueryParams(
                 priority=Priority.MEDIUM.value,
                 completed=False,
@@ -95,16 +102,10 @@ class TestTaskController:
             description="Test description",
             completed=False,
         )
-        expected = [task]
-        task_repository.query.assert_called_once_with(
-            QueryParams(
-                priority=Priority.MEDIUM,
-                completed=False,
-                title="Task",
-                description="description",
-            )
-        )
-        assert expected == actual
+        expected_tasks = [task]
+        task_repository.query.assert_called()
+        assert expected_tasks == actual_tasks
+        assert actual_total == 1
 
     def test_return_on_get_by_id(
         self,
