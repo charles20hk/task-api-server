@@ -70,8 +70,12 @@ class TaskRepository(BaseRepository):
             if query:
                 sql_query += " WHERE "
                 for key, value in query.items():
-                    conditions.append(f"{key} = ?")
-                    values.append(value)
+                    if key == "title" or key == "description":
+                        conditions.append(f"{key} LIKE ?")
+                        values.append(f"%{value}%")
+                    else:
+                        conditions.append(f"{key} = ?")
+                        values.append(value)
 
                 sql_query += " AND ".join(conditions)
             cursor.execute(sql_query, values)
@@ -93,13 +97,17 @@ class TaskRepository(BaseRepository):
 
     def query(self, query_params: QueryParams) -> list[Task]:
         """Retrieve tasks by priority."""
-        query = {}
+        query: dict = {}
         if query_params.priority is not None:
             query["priority"] = query_params.priority.value
         if query_params.completed is not None:
             query["completed"] = query_params.completed
         if query_params.id is not None:
             query["id"] = query_params.id
+        if query_params.title is not None:
+            query["title"] = query_params.title
+        if query_params.description is not None:
+            query["description"] = query_params.description
         return self._get(query)
 
     def update(self, id: int, update_task_request: UpdateTaskRequest) -> None:

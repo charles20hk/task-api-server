@@ -83,6 +83,8 @@ class TestTaskController:
             TaskQueryParams(
                 priority=Priority.MEDIUM.value,
                 completed=False,
+                title="Task",
+                description="description",
             )
         )
         task = Task(
@@ -95,7 +97,12 @@ class TestTaskController:
         )
         expected = [task]
         task_repository.query.assert_called_once_with(
-            QueryParams(priority=Priority.MEDIUM, completed=False)
+            QueryParams(
+                priority=Priority.MEDIUM,
+                completed=False,
+                title="Task",
+                description="description",
+            )
         )
         assert expected == actual
 

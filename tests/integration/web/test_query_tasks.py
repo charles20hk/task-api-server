@@ -75,3 +75,50 @@ class TestQueryTasksApi:
             assert task_dict["description"] == "Test description"
             assert task_dict["completed"] is False
             assert "id" in task_dict
+
+    def test_return_tasks_with_certain_title_and_description(
+        self,
+        test_client: TestClient,
+        create_task_url: str,
+        query_tasks_url: str,
+    ) -> None:
+        """Test return tasks."""
+        create_task_dict_1 = {
+            "title": "Test Task1",
+            "priority": 3,
+            "due_date": "2000-02-01T15:00:00",
+            "description": "Test description1",
+        }
+        response = test_client.post(
+            create_task_url,
+            json=create_task_dict_1,
+        )
+
+        create_task_dict_2 = {
+            "title": "Test Task2",
+            "priority": 3,
+            "due_date": "2000-02-01T15:00:00",
+            "description": "Test description2",
+        }
+        response = test_client.post(
+            create_task_url,
+            json=create_task_dict_2,
+        )
+
+        url = f"{query_tasks_url}?title=Task1"
+        response = test_client.get(url)
+
+        response_dict = response.json()
+        assert isinstance(response_dict, list)
+        assert len(response_dict) == 1
+        assert response_dict[0]["title"] == "Test Task1"
+        assert response_dict[0]["description"] == "Test description1"
+
+        url = f"{query_tasks_url}?description=description2"
+        response = test_client.get(url)
+
+        response_dict = response.json()
+        assert isinstance(response_dict, list)
+        assert len(response_dict) == 1
+        assert response_dict[0]["title"] == "Test Task2"
+        assert response_dict[0]["description"] == "Test description2"

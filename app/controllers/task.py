@@ -38,6 +38,8 @@ class TaskController:
             QueryParams(
                 priority=task_query_params.priority,
                 completed=task_query_params.completed,
+                title=task_query_params.title,
+                description=task_query_params.description,
             )
         )
         return [PersistenceToTaskMapper.convert(task) for task in saved_tasks]

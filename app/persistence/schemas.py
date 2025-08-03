@@ -34,6 +34,8 @@ class QueryParams(BaseModel):
     priority: Priority | None = None
     completed: bool | None = None
     id: int | None = None
+    title: str | None = None
+    description: str | None = None
 
 
 class UpdateTaskRequest(BaseModel):

@@ -112,6 +112,34 @@ class TestTaskRepository:
         del task_1_data_dict["id"]
         assert task_1_data_dict == mock_create_task_request.model_dump()
 
+    def test_returns_on_query_with_title(
+        self,
+        repository: TaskRepository,
+        mock_create_task_request: CreateTaskRequest,
+    ) -> None:
+        """Test retrieving a task by title."""
+        task = repository.add(mock_create_task_request)
+        actual = repository.query(QueryParams(title="Task"))
+        assert isinstance(actual[0], Task)
+        assert actual[0].id == task.id
+        task_1_data_dict = actual[0].model_dump()
+        del task_1_data_dict["id"]
+        assert task_1_data_dict == mock_create_task_request.model_dump()
+
+    def test_returns_on_query_with_description(
+        self,
+        repository: TaskRepository,
+        mock_create_task_request: CreateTaskRequest,
+    ) -> None:
+        """Test retrieving a task by description."""
+        task = repository.add(mock_create_task_request)
+        actual = repository.query(QueryParams(description="description"))
+        assert isinstance(actual[0], Task)
+        assert actual[0].id == task.id
+        task_1_data_dict = actual[0].model_dump()
+        del task_1_data_dict["id"]
+        assert task_1_data_dict == mock_create_task_request.model_dump()
+
     def test_delete(
         self,
         repository: TaskRepository,

@@ -55,7 +55,10 @@ Body
 }
 ```
 
-3. Get the tasks (with/o params), GET /tasks?completed=false&priority=1
+3. Get the tasks (with/o params), GET /tasks?completed=false&priority=1&title=some_title&description=some_desc
+
+when title/description is given, the application tries to look up the tasks which  
+the title or description contains parts of the value.
 
 4. Get a task by ID, GET /tasks/:id
 

@@ -40,6 +40,8 @@ class TaskQueryParams(BaseModel):
 
     priority: Priority | None = None
     completed: bool | None = None
+    title: str | None = None
+    description: str | None = None
 
     @field_validator("priority", mode="before")
     @classmethod
