@@ -7,8 +7,19 @@ from fastapi import HTTPException
 
 from app.controllers.exception import NotFoundError
 from app.controllers.task import TaskController
-from app.schemas import CreateTaskRequest, Priority, Task, TaskQueryParams
-from app.web.resources.tasks.api import create_task, get_task_by_id, query
+from app.schemas import (
+    CreateTaskRequest,
+    Priority,
+    Task,
+    TaskQueryParams,
+    UpdateTaskRequest,
+)
+from app.web.resources.tasks.api import (
+    create_task,
+    get_task_by_id,
+    query,
+    update_task,
+)
 
 
 class TestCreateTaskAPI:
@@ -85,3 +96,38 @@ class TestCreateTaskAPI:
         with pytest.raises(HTTPException) as exc_info:
             await get_task_by_id(1, mock_task_controller)
         assert exc_info.value.status_code == 404
+
+    @pytest.mark.anyio
+    async def test_raise_404_on_update_task_when_not_found(
+        self,
+        mock_task_controller: MagicMock,
+        update_task_request: UpdateTaskRequest,
+    ) -> None:
+        """Test that HTTPException is raised with 404 status code...
+
+        when task is not found.
+        """
+        mock_task_controller.update.side_effect = NotFoundError(1)
+        with pytest.raises(HTTPException) as exc_info:
+            await update_task(1, update_task_request, mock_task_controller)
+        assert exc_info.value.status_code == 404
+
+    @pytest.mark.anyio
+    async def test_returns_on_update_task(
+        self,
+        mock_task_controller: MagicMock,
+        update_task_request: UpdateTaskRequest,
+        updated_task: Task,
+    ) -> None:
+        """Test that update is called on the task controller...
+
+        when updating a task.
+        """
+        mock_task_controller.update.return_value = updated_task
+        result = await update_task(
+            1, update_task_request, mock_task_controller
+        )
+        mock_task_controller.update.assert_called_once_with(
+            id=1, update_task_request=update_task_request
+        )
+        assert result == updated_task

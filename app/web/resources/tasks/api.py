@@ -8,7 +8,12 @@ from fastapi.params import Query
 from app.controllers.exception import NotFoundError
 from app.controllers.task import TaskController
 from app.dependencies import get_task_controller
-from app.schemas import CreateTaskRequest, Task, TaskQueryParams
+from app.schemas import (
+    CreateTaskRequest,
+    Task,
+    TaskQueryParams,
+    UpdateTaskRequest,
+)
 
 
 async def create_task(
@@ -34,6 +39,22 @@ async def get_task_by_id(
     """Get a task by its ID."""
     try:
         return task_controller.get_by_id(id)
+    except NotFoundError as exc:
+        raise HTTPException(
+            status_code=404, detail=f"Task with ID {exc.id} not found"
+        )
+
+
+async def update_task(
+    id: int,
+    update_task_request: UpdateTaskRequest,
+    task_controller: Annotated[TaskController, Depends(get_task_controller)],
+) -> Task:
+    """Update a task."""
+    try:
+        return task_controller.update(
+            id=id, update_task_request=update_task_request
+        )
     except NotFoundError as exc:
         raise HTTPException(
             status_code=404, detail=f"Task with ID {exc.id} not found"
